@@ -1,0 +1,8 @@
+b8/mov:$0x0,:%eax
+55/push:%rbp
+89/mov:%rsp,:%rbp
+8d/lea:rdi,:[rip+0xeac]
+5d/pop:rbp
+c3/ret
+c7/mov:INT<0x4>,:<some value>
+
