@@ -9,8 +9,7 @@ C To Assembly ( cta ) is a language translator,that translates C language to x86
 <br>if-else branch </br>
 <br>printf,scanf functions using syscalls </br>
 <br>And... that's about it.</br>
-<h1>And i also made a disassembler</h1>
-<h2>disassembler is called gpd</h2>
+
 <h2>gpd works for basic stuff, mov (0x89) , push (0x55) and etc..</h2>
 
 
