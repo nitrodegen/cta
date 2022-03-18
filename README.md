@@ -10,7 +10,7 @@ C To Assembly ( cta ) is a language translator,that translates C language to x86
 <br>printf,scanf functions using syscalls </br>
 <br>And... that's about it.</br>
 
-<h2>gpd works for basic stuff, mov (0x89) , push (0x55) and etc..</h2>
+
 
 
 <h1>cta test</h1>
