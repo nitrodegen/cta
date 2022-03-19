@@ -21,6 +21,5 @@ C To Assembly ( cta ) is a language translator,that translates C language to x86
 <br>Int declaration basically works for everything... don't ask me anything. i do have to fix that , i just have to find more time to do it.</br>
 
 <h1>cta basic example</h1>
-![123121](https://user-images.githubusercontent.com/59802817/155896897-2119a671-73d6-418c-9463-31651bc702ee.PNG)
 
 ![Screenshot from 2022-03-19 16-02-25](https://user-images.githubusercontent.com/59802817/159127148-93b47258-560f-4236-8f8d-8f28edf9006d.png)
