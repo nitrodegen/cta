@@ -41,7 +41,7 @@ vector<string> split1(string str,string del){
 	return dele;
 }
 
-string* printasm(string toprint ){
+vector<string>printasm(string toprint ){
 	vector<string>sz = split1(toprint,"\"");
 	toprint = sz[1];
 	stringstream ss;
@@ -57,13 +57,16 @@ string* printasm(string toprint ){
 	ss>>len;
 	string instruction ="\n\tmov rax,1\n\tmov rdi,1\n\tmov rsi,"+name+"\n\tmov rdx,"+len+"\n\tsyscall";
 
-	string* arr = new string[3];
-	arr[0] = instruction;
-	arr[1] = name;
-	arr[2] = toprint;
+	
+	vector<string>arr;
+	arr.push_back(instruction);
+	arr.push_back(name);
+	arr.push_back(toprint);
+	
 	return arr;
+	
 
-
+	
 }
 
 int main(int argc,char *argv[]){
@@ -89,10 +92,48 @@ int main(int argc,char *argv[]){
 	//desc.replace(desc.find("="),1,"[");
 	vector<pair<string,string > >prep;
 	
-
+	
 	for(int i =0;i<splitted.size();i++){
+
+		if(splitted[i].find("for") != string::npos){
 		
-		if(splitted[i].find("printf(") != string::npos && splitted[i].find("%d")== string::npos && splitted[i].find("if") == string::npos && splitted[i].find("else")==string::npos){
+			string isize = splitted[i];
+			string looptimes = splitted[i+1];
+			string stat = splitted[i+2].substr(0,splitted[i+2].find(")"));
+			//cout<<stat<<endl;
+			vector<string>insides;
+			
+			for(int j =i+2;j<splitted.size();j++){
+				if(splitted[i].find("}") != string::npos){
+					break;
+				}
+				if(splitted[i] != stat){
+					string forbranch = splitted[j].substr(splitted[j].find("{")+1);
+					forbranch.erase(remove(forbranch.begin(),forbranch.end(),'\t'),forbranch.end());
+					insides.push_back(forbranch);
+
+				}
+			}
+			for(int i =0;i<insides.size();i++){
+				string func = insides[i].substr(0,insides[i].find("("));
+				string val = insides[i].substr(insides[i].find("\"")+1);
+				val.replace(val.find("\")"),2,"");
+				func = "FOR"+func;
+				prep.push_back(make_pair(func,val));
+				
+			}
+		 
+			string startfrom = isize.substr(isize.find("for(int")+7);
+			startfrom = startfrom.substr(startfrom.find("=")+1);
+			string loopfor = looptimes.substr(looptimes.find("<")+1);
+
+			string toprep = startfrom+"]"+loopfor+"_/"+stat;
+			
+			prep.push_back(make_pair("for",toprep));
+			
+		}
+	
+		if(splitted[i].find("printf(") != string::npos  && splitted[i].find("<") == string::npos &&  splitted[i].find("++") == string::npos &&  splitted[i].find("for(") == string::npos && splitted[i].find("i++){") == string::npos && splitted[i].find("%d")== string::npos && splitted[i].find("if") == string::npos && splitted[i].find("else")==string::npos){
 			
 			vector<string>row = split(splitted[i],'"');
 			string f = row[0];
@@ -101,8 +142,11 @@ int main(int argc,char *argv[]){
 	//		cout<<f<<endl;
 		
 			prep.push_back(make_pair(f,row[1]));
-		
+			
 		}
+		
+		
+		
 		if (splitted[i].find("if") != string::npos){
 				//first split tree part , then if part() 
 				vector<string>spagi = split1(splitted[i],"{");
@@ -113,11 +157,11 @@ int main(int argc,char *argv[]){
 				stat.erase(remove(stat.begin(),stat.end(),')'),stat.end());
 			
 				vector<string>ifstat = split1(stat," ");
+
 				for(int i =1;i<ifstat.size();i++){
 					if(ifstat[i] == ">"){
 						string fleki = ifstat[i-1]+"_/"+ifstat[i+1];  
 						prep.push_back(make_pair("cmp",fleki));
-
 
 					}
 	
@@ -127,8 +171,9 @@ int main(int argc,char *argv[]){
 			
 				
 		}
+
 		if(splitted[i].find("%d") != string::npos && splitted[i].find("printf") != string::npos
-				 && splitted[i].find("if") == string::npos && splitted[i].find("else") == string::npos) {
+				 && splitted[i].find("if") == string::npos && splitted[i].find("else") == string::npos && splitted[i].find("for") == string::npos) {
 			vector<string>la = split1(splitted[i],",");
 			
 			vector<string>z = split1(la[0],"(");
@@ -136,10 +181,11 @@ int main(int argc,char *argv[]){
 		
 			place.erase(remove(place.begin(),place.end(),'"'),place.end());		
 			string fb =la[1];
-			
+		
 			fb.erase(remove(fb.begin(),fb.end(),')'),fb.end());
-			for(auto const& th:prep){
 			
+			for(auto const& th:prep){
+				
 				if(fb.compare(th.first)==0){
 
 			
@@ -148,6 +194,7 @@ int main(int argc,char *argv[]){
 					ss<<th.second;
 					ss>>val;
 					place.replace(place.find("%d"),val.length()+1,val);
+					cout<<"PLACE";
 				//	cout<<place<<endl;
 
 
@@ -173,6 +220,7 @@ int main(int argc,char *argv[]){
 				
 			}
 		
+		
 
 		}
 		if(splitted[i].find("scanf") != string::npos ){
@@ -184,7 +232,9 @@ int main(int argc,char *argv[]){
 			prep.push_back(make_pair("scanf",saver));
 		}
 	
-		if(  splitted[i].find("else") == string::npos && splitted[i].find("if") == string::npos && splitted[i].find("else") == string::npos && splitted[i].find("printf") == string::npos && splitted[i].find("scanf")== string::npos){
+		if( splitted[i].find("<") == string::npos && splitted[i].find("++") == string::npos && splitted[i].find("else") == string::npos &&  splitted[i].find("for") == string::npos && splitted[i].find("if") == string::npos && splitted[i].find("else") == string::npos && splitted[i].find("printf") == string::npos && splitted[i].find("scanf")== string::npos){
+			
+		
 			vector<string> rowed =split1(splitted[i]," ");
 			//debug(rowed);
 			
@@ -194,6 +244,7 @@ int main(int argc,char *argv[]){
 			else{
 				prep.push_back(make_pair(rowed[1],rowed[3]));
 			}
+		
 			
 		}	
 		if(splitted[i].find("else") != string::npos){
@@ -206,19 +257,67 @@ int main(int argc,char *argv[]){
 			}
 			
 		}
+		
+		
 			
 	}
+	
+	
+	
 	string heading =";Converted with CoT by Suibex.\nglobal _start\n_start:\n\tpush rbp\n\tmov rbp,rsp\n\tsub rsp,0x10";
 
 	
 	vector<string>instructions;
 	string objfun="\n\t;quit\n\tmov rax,60\n\tmov rdi,0\n\tsyscall\n\tret\n\t";
 	for(auto const& th: prep){
-	
-		if( th.first.find("else") == string::npos  && th.first.find("cmp") == string::npos && th.first.find("printf") == string::npos && th.first.find("em") == string::npos && th.first.find("scanf") == string::npos && th.first.find("resb") == string::npos){
+		
+
+		
+		if( th.first.find("else") == string::npos  && th.first.find("cmp") == string::npos && th.first.find("for") == string::npos && th.first.find("FORprintf") == string::npos &&   th.first.find("printf") == string::npos && th.first.find("em") == string::npos && th.first.find("scanf") == string::npos && th.first.find("resb") == string::npos){
 			string ass=";decimal declared\n\tmov dword[rbp-"+th.second+"],"+th.second+";"+th.first+"\n";
 
 			instructions.push_back(ass);
+		}
+		
+		if(th.first.compare("for")==0){
+			string defval = th.second.substr(0,th.second.find("]"));
+			string lfor = th.second.substr(th.second.find("]")+1);
+			lfor = lfor.substr(0,lfor.find("_/"));
+			srand(time(NULL));
+			stringstream z;
+			z<<rand();
+			string fopi;
+			z>>fopi;
+			z.clear();
+			string inc = th.second.substr(th.second.find("_/")+2);
+			string ass = "\n\tmov cx,"+lfor+"\nstartloop"+fopi+":\n\tcmp cx,"+defval+"\n\tjz end"+fopi+"\n\tpush cx\nloop"+fopi+":";
+			int h=0;
+			for(auto const& th:prep){
+				
+				if(th.first.compare("FOR\nprintf")==0){
+					z.clear();
+					z<<h;
+					string o;
+					z>>o;
+					z.clear();
+
+					objfun+="\nprintf"+fopi+o+":\n\tdb \""+th.second+"\",0x0a,0x0d";
+					z.clear();
+					string leni;
+					z<<th.second.length();
+					z>>leni;
+					z.clear();
+					ass+="\n\tmov rax,1\n\tmov rdi,1\n\tmov rsi,printf"+fopi+o+"\n\tmov rdx,"+leni+"\n\tsyscall\n";
+
+				}
+				h++;
+			}
+			ass+="\n\tpop cx\n\tdec cx\n\tjmp startloop"+fopi;
+			ass+="\nend"+fopi+":";
+			
+			instructions.push_back(ass);
+
+			
 		}
 		
 		if(th.first.compare("cmp")==0){
@@ -290,17 +389,16 @@ int main(int argc,char *argv[]){
 				}
 
 			}
-			 //LEFT HERE TO BUILD IF , SHIT ME .
-			
-
 		}
 		if(th.first.compare("else")==0){
-			string* instr = printasm(th.second);
+			vector<string>instr = printasm(th.second);
 			string ass = instr[0];
 			string name = instr[1];
 			string print = instr[2];
+			
 			objfun+="\nsection .data\n"+name+":\n\tdb\""+print+"\"";
 			instructions.push_back(ass);
+			
 
 		}
 		if(th.first.find("scanf") != string::npos){
@@ -354,7 +452,8 @@ int main(int argc,char *argv[]){
 			objfun+="\nsection .bss\n\t"+th.second+" resb 9107";
 			continue;
 		}
-		if(th.first.find("printf") != string::npos){	
+		
+		if(th.first.compare("\nprintf") ==0 || th.first.compare("printf") ==0 ){	
 			
 		
 			stringstream ss;
@@ -368,7 +467,7 @@ int main(int argc,char *argv[]){
 			
 			if(th.first.find("printf")!= string::npos){
 				
-				stringstream ss;
+				ss.clear();
 				string ri;
 				ss<<rand();
 				ss>>ri;
@@ -381,8 +480,10 @@ int main(int argc,char *argv[]){
 			}
 		
 		}
-
+		
 	}
+	
+	
 	
 
 	
@@ -421,8 +522,9 @@ int main(int argc,char *argv[]){
 		fiqi<<heading;
 		fiqi<<cont1;
 	}	
-	fiqi.close();
 
+	fiqi.close();
+	
 	string cmd1= "nasm -f elf64 "+filename;
 	system(cmd1.c_str());
 	string ofi=filename.substr(0,filename.find("."));
